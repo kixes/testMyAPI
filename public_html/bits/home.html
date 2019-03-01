@@ -1,0 +1,117 @@
+<div class="container z-depth-1">
+    <div class="row">
+        <div class="col s12">
+            <ul class="tabs" style="overflow: hidden;">
+                <li class="tab col s6"><a class="active" href="#main">Main</a></li>
+                <li class="tab col s6"><a href="#headers">Headers</a></li>
+            </ul>
+        </div>
+        <div id="main" class="col s12">
+            <!-- Switch -->
+            <div style="padding:20px;" class="switch">
+                <label>
+                    GET
+                    <input id="delivery_method" type="checkbox">
+                    <span class="lever"></span>
+                    POST
+                </label>
+            </div>
+            <div class="input-field">
+                <input id="address_url" type="text" class="validate">
+                <label for="address_url">Address URL</label>
+            </div>
+            <div class="input-field">
+                <textarea id="payload" class="materialize-textarea"></textarea>
+                <label for="payload">Payload (put your JSON data here)</label>
+            </div>
+
+        </div>
+        <div id="headers" class="col s12">
+            <ul id="data_headers" style="padding:10px">
+                <li class="input-field row card" index=1>
+                    <div class="input-field col s6">
+                        Name <input placeholder="Variable Name" id="var_name" type="text" class="validate">
+                    </div>
+                    <div class="input-field col s6">
+                        Value <input placeholder="Variable Value" id="var_val" type="text" class="validate">
+                    </div>
+                </li>
+            </ul>
+            <a id="add_header" class="btn">Add Header</a>
+        </div>
+    </div>
+
+    <a id="send_data" class="btn waves-effect waves-light">Submit
+        <i class="material-icons right">send</i>
+    </a>
+
+    <div style="overflow-x:scroll" id="output">
+
+    </div>
+</div>
+
+<script async>
+    var bit_data = {}
+    bit_data.add_header = () => {
+        index = parseFloat($("#data_headers").children("li").last().attr("index")) + parseFloat(1)
+        $("#data_headers").last("li").find("input").attr("index", index)
+        console.log(index)
+        $("#data_headers").append(
+            `
+            <li class="input-field card row" index=${index}>
+                <div class="input-field col s6">
+                    Name <input placeholder="Variable Name" id="var_name" type="text" class="validate">
+                </div>
+                <div class="input-field col s6">
+                    Value <input placeholder="Variable Value" id="var_val" type="text" class="validate">
+                </div>
+            </li>
+        `
+        )
+    }
+
+    bit_data.send_data = async () => {
+        headers = {}
+        await $("#data_headers").children().each((i, elm) => {
+            if ($(elm).find("#var_name").val() == "" || $(elm).find("#var_val").val() == "")
+                return false;
+            var var_name = $(elm).find("#var_name").val()
+            var var_val = $(elm).find("#var_val").val()
+            headers[var_name.toString()] = var_val.toString()
+        })
+        //console.log(headers)
+        console.log("sending data:")
+        var url = $("#address_url").val()
+        var data = $("#payload").val()
+        var method = "GET"
+        if ($("#delivery_method").is(":checked")) method = "POST"
+        //console.log(method)
+        $.ajax({
+            beforeSend: async (xhr) => {
+                xhr.setRequestHeader("x-proxy-redirect", url);
+                console.log(headers)
+                xhr.setRequestHeader("x-proxy-headers", JSON.stringify(headers));
+            },
+            type: method,
+            url: "/proxy",
+            data: data,
+            success: function (data) {
+                console.log("Success!")
+                $("#output").text(JSON.stringify(data));
+                console.log(data)
+            }
+        });
+        // automatically close the keyboard on iOS
+        document.activeElement.blur();
+    }
+
+    //create event bindings
+    $("#add_header").on("click", bit_data.add_header)
+    $(document).on('keyup', (e) => {
+        if (e.which == 13) {
+            bit_data.send_data()
+        }
+    });
+    $("#send_data").on("click", bit_data.send_data)
+    $('.tabs').tabs()
+</script>
