@@ -32,4 +32,4 @@ var proxy = (req,res) => {
 app.use('/', express.static( 'public_html' ) )
 app.get('/proxy', proxy)
 app.post('/proxy',proxy)
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+app.listen(port, () => console.log(`Spinning up web app on port ${port}!`))
